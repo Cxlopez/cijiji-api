@@ -1,7 +1,11 @@
 // REQUIREMENTS
 const express = require("express");
 const morgan = require('morgan');
+const helmet = require('helmet');
+const { token } = require("morgan");
 
+
+//DATABASE
 const fruitsDB = {
   '1a': {
     name: 'mango',
@@ -19,10 +23,17 @@ const fruitsDB = {
 //SETUP AND MIDDLEWARES
 const app = express();
 const port = 8000;
-app.use(morgan('dev')); //Requests logger
-app.use(express.json()); //Allows requests that include json body
 
-//ROUTES / ENDPOINTS
+app.use(helmet());
+app.use(morgan('dev')); //Middleware that logs all requests
+app.use(express.json()); //Allows requests that include json body
+const middleware = (req, res, next) => {
+  req.token = "token123"
+  next();
+}
+
+
+// ---------------------------------------------- ROUTES / ENDPOINTS
 app.get ('/', (req, res) => {
   res.send("Hello world!");
 })
