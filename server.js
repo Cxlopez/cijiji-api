@@ -113,6 +113,8 @@ app.delete('/api/fruits/:id', (req, res) => {
 });
 
 //Authentication routes - (register, login, logout)
+
+// Register
 app.post('/api/auth/register', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -135,6 +137,15 @@ app.post('/api/auth/register', (req, res) => {
   res.status(201).send({ message: 'User created!', user: usersDB[id] });
 
 });
+
+//Logout
+
+
+// Catch all route
+app.use((req, res) => {
+  res.status(404).send({ message: 'URL Not found' });
+});
+
 
 //LISTENER 
 app.listen(port, () => {
