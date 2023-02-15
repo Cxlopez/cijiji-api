@@ -2,6 +2,7 @@
 const express = require("express");
 const morgan = require('morgan');
 const helmet = require('helmet');
+const bcrypt = require("bcryptjs");
 
 
 //DATABASE
@@ -53,7 +54,9 @@ app.post('/api/fruits', (req, res) => {
     return res.status(400).send({ message: 'provide name, color, image to create a fruit' });
   }
   
-  const id = Math.floor(Math.random() * 10);
+  let id = Math.random()
+  .toString(36)
+  .substr(2, 3);
 
   fruitsDB[id] = {
     name,
@@ -109,6 +112,29 @@ app.delete('/api/fruits/:id', (req, res) => {
   res.status(204).send();
 });
 
+//Authentication routes - (register, login, logout)
+app.post('/api/auth/register', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).send({ message: 'please provide an email and password' })
+  }
+
+  let id = Math.random()
+  .toString(36)
+  .substr(2, 3);
+
+  const salt = bcrypt.genSaltSync(10);
+  const hashedPassword = bcrypt.hashSync(password, salt);
+
+  usersDB[id] = {
+    id,
+    email,
+    password: hashedPassword
+  }
+
+  res.status(201).send({ message: 'User created!', user: usersDB[id] });
+
+});
 
 //LISTENER 
 app.listen(port, () => {
