@@ -2,7 +2,6 @@
 const express = require("express");
 const morgan = require('morgan');
 const helmet = require('helmet');
-const { token } = require("morgan");
 
 
 //DATABASE
@@ -20,17 +19,21 @@ const fruitsDB = {
   }
 }
 
+const usersDB = [
+  {
+    id: 'ar5',
+    email: 'user1@email.com',
+    password: '123'
+  }
+];
+
 //SETUP AND MIDDLEWARES
 const app = express();
 const port = 8000;
 
-app.use(helmet());
+app.use(helmet()); //Includes security headers (owasp)
 app.use(morgan('dev')); //Middleware that logs all requests
 app.use(express.json()); //Allows requests that include json body
-const middleware = (req, res, next) => {
-  req.token = "token123"
-  next();
-}
 
 
 // ---------------------------------------------- ROUTES / ENDPOINTS
