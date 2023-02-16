@@ -1,24 +1,25 @@
-// REQUIREMENTS
-const express = require("express");
+// ----------------------- REQUIREMENTS
+const express = require('express');
 const morgan = require('morgan');
 const helmet = require('helmet');
-const bcrypt = require("bcryptjs");
+const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session');
 
-
-//DATABASE
+// Database
 const fruitsDB = {
-  '1a': {
+  a1q: {
+    id: 'a1q',
     name: 'mango',
     color: 'yellow',
-    image: "🥭"
+    emoji: '🥭'
   },
-
-  '2b': {
-    name: 'blueberry',
-    color: 'blue',
-    image: "🫐"
+  w4f: {
+    id: 'w4f',
+    name: 'grape',
+    color: 'purple',
+    emoji: '🍇'
   }
-}
+};
 
 const usersDB = [
   {
@@ -28,126 +29,191 @@ const usersDB = [
   }
 ];
 
-//SETUP AND MIDDLEWARES
+// ----------------------- SETUP AND MIDDLEWARES
 const app = express();
 const port = 8000;
 
-app.use(helmet()); //Includes security headers (owasp)
-app.use(morgan('dev')); //Middleware that logs all requests
-app.use(express.json()); //Allows requests that include json body
+app.use(helmet()); // includes security headers (owasp)
+app.use(morgan('dev')); // middleware that logs all the requests
+app.use(express.json()); // allow requests to include json body
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: ['myRandomSuperSecretKey', 'anotherRandomString'],
 
+    // Cookie Options
+    // maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 10 * 60 * 1000 // 10 min
+  })
+);
 
-// ---------------------------------------------- ROUTES / ENDPOINTS
-app.get ('/', (req, res) => {
-  res.send("Hello world!");
-})
+// ----------------------- ROUTES / ENDPOINTS
+app.get('/', (req, res) => {
+  res.send('<h1>Hello World! 🐳</h1><p>CRUD /api/fruits</p>');
+});
 
 app.get('/home', (req, res) => {
-  res.status(200).send({ message: 'welcome home'});
-})
+  // Update views
+  req.session.views = (req.session.views || 0) + 1;
+  res.status(200).send({ message: '🏡', views: req.session.views });
+});
 
-//CRUD Operations
-//CREATE - POST
+// CRUD REST API FRUITS ROUTES
+// CREATE - post
 app.post('/api/fruits', (req, res) => {
-  const {name, color, image} = req.body;
-  if(!name || !color || !image) {
-    return res.status(400).send({ message: 'provide name, color, image to create a fruit' });
+  const { userId } = req.session;
+  if (!userId) {
+    return res.status(401).send({ message: 'User is not logged in' });
   }
-  
+
+  const validUser = usersDB.find(usr => usr.id === userId);
+  if (!validUser) {
+    return res.status(403).send({ message: 'Invalid user' });
+  }
+
+  const { name, color, emoji } = req.body;
+  if (!name || !color || !emoji) {
+    return res
+      .status(400)
+      .send({ message: 'Provide name, color and emoji to create a fruit' });
+  }
+
   let id = Math.random()
-  .toString(36)
-  .substr(2, 3);
+    .toString(36)
+    .substr(2, 3);
 
   fruitsDB[id] = {
+    id,
     name,
     color,
-    image
-  }
+    emoji
+  };
 
-  res.status(201).send({message: 'Created!', fruit: req.body})
-})
+  res.status(201).send({ message: 'Created!', fruit: fruitsDB[id] });
+});
 
-
-//READ - GET
-//READ ALL
+// READ - get
+// Read All
 app.get('/api/fruits', (req, res) => {
-  res.status(200).send({ message: 'List of all fruits', fruits: fruitsDB})
-})
+  res.status(200).send({ message: 'List of all fruits!', fruits: fruitsDB });
+});
 
-//READ ONE
+// Read One
 app.get('/api/fruits/:id', (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
+
   const fruit = fruitsDB[id];
   if (!fruit) {
-    return res.status(404).send({ message: 'Sorry fruit not found' });
+    return res.status(404).send({ message: 'Sorry, fruit not found' });
   }
 
-  res.status(200).send({ message: 'Here is you fruit', fruits: fruitsDB[id]});
-})
+  res.status(200).send({ message: 'Here is your fruit!', fruit });
+});
 
-
-//UPDATE - PUT
+// UPDATE - put
 app.put('/api/fruits/:id', (req, res) => {
-  const {name, color, image} = req.body;
-  if(!name || !color || !image) {
-    return res.status(400).send({ message: 'provide name, color, image to create a fruit' });
+  const { name, color, emoji } = req.body;
+  if (!name || !color || !emoji) {
+    return res
+      .status(400)
+      .send({ message: 'Provide name, color and emoji to update a fruit' });
   }
-  
+
   const { id } = req.params;
+
+  let fruit = fruitsDB[id];
+  if (!fruit) {
+    return res.status(404).send({ message: 'Sorry, fruit not found' });
+  }
 
   fruitsDB[id] = {
+    id,
     name,
     color,
-    image
-  }
+    emoji
+  };
 
-  res.status(201).send({message: 'Updated!', fruit: req.body})
-})
+  res.status(201).send({ message: 'Updated!', fruit: fruitsDB[id] });
+});
 
-
-//DELETE - DELETE
+// DELETE - delete
 app.delete('/api/fruits/:id', (req, res) => {
   const { id } = req.params;
+
+  let fruit = fruitsDB[id];
+  if (!fruit) {
+    return res.status(404).send({ message: 'Sorry, fruit not found' });
+  }
+
   delete fruitsDB[id];
   res.status(204).send();
 });
 
-//Authentication routes - (register, login, logout)
-
-// Register
+// AUTHENTICATION ROUTES
 app.post('/api/auth/register', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).send({ message: 'please provide an email and password' })
+    return res
+      .status(400)
+      .send({ message: 'Provide email and password to register' });
+  }
+
+  const emailExists = usersDB.find(usr => usr.email === email);
+  if (emailExists) {
+    return res
+      .status(400)
+      .send({ message: 'An user already exists with that email' });
   }
 
   let id = Math.random()
-  .toString(36)
-  .substr(2, 3);
+    .toString(36)
+    .substr(2, 3);
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
-  const salt = bcrypt.genSaltSync(10);
-  const hashedPassword = bcrypt.hashSync(password, salt);
-
-  usersDB[id] = {
+  const newUser = {
     id,
     email,
     password: hashedPassword
-  }
+  };
 
-  res.status(201).send({ message: 'User created!', user: usersDB[id] });
+  usersDB.push(newUser);
+  console.log(usersDB);
 
+  res
+    .status(201)
+    .send({ message: 'User registered successfully!', user: newUser });
 });
 
-//Logout
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).send({ message: 'Provide email and password' });
+  }
 
+  const user = usersDB.find(usr => usr.email === email);
+  if (!user) {
+    return res.status(401).send({ message: 'Invalid credentials!' });
+  }
+
+  const passwordsMatch = bcrypt.compareSync(password, user.password);
+  if (!passwordsMatch) {
+    return res.status(401).send({ message: 'Invalid credentials!' });
+  }
+
+  req.session.userId = user.id;
+
+  res.status(200).send({ message: 'User logged in successfully!' });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session = null;
+  res.status(200).send({ message: 'User successfully logged out' });
+});
 
 // Catch all route
 app.use((req, res) => {
   res.status(404).send({ message: 'URL Not found' });
 });
 
-
-//LISTENER 
-app.listen(port, () => {
-  console.log(`app listening on port ${port}`);
-})
+// ----------------------- LISTENER
+app.listen(port, () => console.log(`Example app listening on port ${port}`));
