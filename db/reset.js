@@ -1,19 +1,21 @@
 require('dotenv').config();
 const { db } = require('./index');
 
-const usersSchema = require('./schemas/usersSchema');
+const createSchema = require('./schemas/createSchema');
 const fruitsSchema = require('./schemas/fruitsSchema');
 
 const usersSeeds = require('./seeds/usersSeeds');
 const fruitsSeeds = require('./seeds/fruitsSeeds');
+const adsSeeds = require('./seeds/adsSeeds');
 
 db.connect();
 
 const promises = [
-  db.query(usersSchema),
+  db.query(createSchema),
   db.query(fruitsSchema),
   db.query(usersSeeds),
-  db.query(fruitsSeeds)
+  db.query(fruitsSeeds),
+  db.query(adsSeeds)
 ];
 
 Promise.all(promises)
