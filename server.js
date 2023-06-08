@@ -21,10 +21,11 @@ app.use(
     keys: ['myRandomSuperSecretKey', 'anotherRandomString'],
 
     // Cookie Options
-    // maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    maxAge: 10 * 60 * 1000 // 10 min
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    // maxAge: 10 * 60 * 1000 // 10 min
   })
 );
+
 
 app.use(cors());
 

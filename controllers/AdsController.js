@@ -7,10 +7,26 @@ const create = (req, res) => {
   }
 
   const { title, thumbnail_url, description, category, price } = req.body;
-  if (!title || !thumbnail_url || !description || !category || !price) {
+  if (!title) {
     return res
       .status(400)
-      .send({ message: 'Please Provide All Information' });
+      .send({ message: 'Please Provide Title' });
+  } else if (!thumbnail_url) {
+    return res
+      .status(400)
+      .send({ message: 'Please Provide photo' });
+  } else if (!description) {
+    return res
+      .status(400)
+      .send({ message: 'Please Provide description' });
+  } else if (!category) {
+    return res
+      .status(400)
+      .send({ message: 'Please Provide category' });
+  } else if (!price) {
+    return res
+      .status(400)
+      .send({ message: 'Please Provide price' });
   }
 
   AdsModel.create(userId, title, thumbnail_url, description, category, price)

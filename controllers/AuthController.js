@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
-
+// const jwt = require('jsonwebtoken');
+// const secret = 'your-secret-key';
 const { AuthModel } = require('../models');
 
 const register = (req, res) => {
